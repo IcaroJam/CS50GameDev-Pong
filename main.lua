@@ -376,8 +376,12 @@ function performPaddleAI()
 	-- Predict Y point of impact:
 	local yoI = ball.dy * (VIRTUAL_WIDTH - ball.x) + ball.y
 
+	local xoI
+
 	if ball.dy < 0 then
-		
+		xoI = -ball.y / ball.dy + ball.x
+		-- Make this recursive somehow? I'd need to store the poI as new positions from which to do the next calculations until the xoI happens before the yoI
+		-- Also randomization as to not make it imposible to win and optimization so the calculations are only done once (or maybe once per ball impact?) and the paddle moves accordingly.
 	elseif ball.dy > 0 then
 		
 	else
