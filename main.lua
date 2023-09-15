@@ -227,10 +227,20 @@ function love.update(dt)
 				ball:reset()
 			end
 		end
+
+		-- player 2 (insert IA here)
+		performPaddleAI()
+		if GpoI[2] > player2.y + player2.height / 2 + 7 then
+			player2.dy = PADDLE_SPEED
+		elseif GpoI[2] < player2.y + player2.height / 2 - 7 then
+			player2.dy = -PADDLE_SPEED
+		else
+			player2.dy = 0
+		end
 	end
 
 	--
-	-- paddles can move no matter what state we're in
+	-- player paddle can move no matter what state we're in
 	--
 	-- player 1
 	if love.keyboard.isDown('w') then
@@ -240,16 +250,6 @@ function love.update(dt)
 	else
 		player1.dy = 0
 	end
-
-	-- player 2 (insert IA here)
-	performPaddleAI()
-	--[[ if love.keyboard.isDown('up') then
-	   [     player2.dy = -PADDLE_SPEED
-	   [ elseif love.keyboard.isDown('down') then
-	   [     player2.dy = PADDLE_SPEED
-	   [ else
-	   [     player2.dy = 0
-	   [ end ]]
 
 	-- update our ball based on its DX and DY only if we're in play state;
 	-- scale the velocity by dt so movement is framerate-independent
@@ -369,28 +369,46 @@ function displayFPS()
 	love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
 end
 
+GpoI = {}
 --[[
 	Does all of the AI paddle calculations.
 --]]
-function performPaddleAI()
-	-- Predict Y point of impact:
-	local yoI = ball.dy * (VIRTUAL_WIDTH - ball.x) + ball.y
-
-	local xoI
-
-	if ball.dy < 0 then
-		xoI = -ball.y / ball.dy + ball.x
 		-- Make this recursive somehow? I'd need to store the poI as new positions from which to do the next calculations until the xoI happens before the yoI
 		-- Also randomization as to not make it imposible to win and optimization so the calculations are only done once (or maybe once per ball impact?) and the paddle moves accordingly.
-	elseif ball.dy > 0 then
-		
-	else
-		if ball.y > player2.y + player2.height / 2 then
-			player2.dy = PADDLE_SPEED
-		elseif ball.y + ball.height < player2.y + player2.height / 2 then
-			player2.dy = - PADDLE_SPEED
-		else
-			player2.dy = 0
-		end
+function performPaddleAI()
+	if ball.dx < 0 then
+		return
 	end
+
+	local x, y, dy = ball.x, ball.y, ball.dy
+	local function getNextPoI ()
+		if dy == 0 then
+			return {VIRTUAL_WIDTH, y + math.random(-15, 15)}
+		end
+
+		local xoI = 0
+		local slope = dy / ball.dx
+		local yLim
+		if dy < 0 then
+			yLim = 0
+		else
+			yLim = VIRTUAL_HEIGHT
+		end
+
+		xoI = (yLim - y) / slope + x
+		-- Introduce some randomness to reduce ai precission
+		return {xoI + math.random(-10, 10), yLim}
+	end
+
+	local t = getNextPoI()
+    while (t[1] < VIRTUAL_WIDTH - 5) do
+		x = t[1]
+		y = t[2]
+		dy = -dy
+		t = getNextPoI()
+    end
+
+	-- Predict Y point of impact:
+	GpoI[1] = VIRTUAL_WIDTH
+	GpoI[2] = (dy / ball.dx) * (VIRTUAL_WIDTH - x) + y + math.random(-15, 15)
 end
