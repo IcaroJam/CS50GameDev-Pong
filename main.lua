@@ -144,6 +144,9 @@ function love.update(dt)
 		else
 			ball.dx = -math.random(140, 200)
 		end
+
+		-- do the trajectory calculations on serve
+		performPaddleAI()
 	elseif gameState == 'play' then
 		-- detect ball collision with paddles, reversing dx if true and
 		-- slightly increasing it, then altering the dy based on the position
@@ -160,6 +163,9 @@ function love.update(dt)
 			end
 
 			sounds['paddle_hit']:play()
+
+			-- calculate next point of impact on the ai side
+			performPaddleAI()
 		end
 		if ball:collides(player2) then
 			ball.dx = -ball.dx * 1.03
@@ -181,6 +187,11 @@ function love.update(dt)
 			ball.y = 0
 			ball.dy = -ball.dy
 			sounds['wall_hit']:play()
+
+			-- readjust trajectory calculation half of the times
+			if math.random(0, 1) == 1 then
+				performPaddleAI()
+			end
 		end
 
 		-- -4 to account for the ball's size
@@ -188,6 +199,11 @@ function love.update(dt)
 			ball.y = VIRTUAL_HEIGHT - 4
 			ball.dy = -ball.dy
 			sounds['wall_hit']:play()
+
+			-- readjust trajectory calculation half of the times
+			if math.random(0, 1) == 1 then
+				performPaddleAI()
+			end
 		end
 
 		-- if we reach the left edge of the screen, go back to serve
@@ -229,13 +245,14 @@ function love.update(dt)
 		end
 
 		-- player 2 (insert IA here)
-		performPaddleAI()
-		if GpoI[2] > player2.y + player2.height / 2 + 7 then
-			player2.dy = PADDLE_SPEED
-		elseif GpoI[2] < player2.y + player2.height / 2 - 7 then
-			player2.dy = -PADDLE_SPEED
-		else
-			player2.dy = 0
+		if GpoI[1] ~= nil and GpoI[2] ~= nil then
+			if GpoI[2] > player2.y + player2.height / 2 + 7 then
+				player2.dy = PADDLE_SPEED
+			elseif GpoI[2] < player2.y + player2.height / 2 - 7 then
+				player2.dy = -PADDLE_SPEED
+			else
+				player2.dy = 0
+			end
 		end
 	end
 
@@ -383,7 +400,7 @@ function performPaddleAI()
 	local x, y, dy = ball.x, ball.y, ball.dy
 	local function getNextPoI ()
 		if dy == 0 then
-			return {VIRTUAL_WIDTH, y + math.random(-15, 15)}
+			return {VIRTUAL_WIDTH, y + math.random(-10, 10)}
 		end
 
 		local xoI = 0
@@ -397,7 +414,7 @@ function performPaddleAI()
 
 		xoI = (yLim - y) / slope + x
 		-- Introduce some randomness to reduce ai precission
-		return {xoI + math.random(-10, 10), yLim}
+		return {xoI + math.random(-15, 15), yLim}
 	end
 
 	local t = getNextPoI()

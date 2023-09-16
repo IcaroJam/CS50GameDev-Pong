@@ -64,4 +64,7 @@ end
 
 function Ball:render()
 	love.graphics.rectangle('fill', self.x, self.y, self.width, self.height)
+	--[[ if GpoI[1] and GpoI[2] then
+	   [     love.graphics.line(self.x + 2, self.y + 2, GpoI[1], GpoI[2])
+	   [ end ]]
 end
